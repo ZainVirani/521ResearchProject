@@ -13,18 +13,50 @@ public struct PlayerSnapshot
 }
 
 public class PlayerController : MonoBehaviour {
+
     public GameMapBehavior map;
+    public MapPosition curMapPos;
+    public AStarBehavior pathFinder;
+    public GameSystem gameSystem;
+    List<GameTile> path;
+    public FiniteList<float> snapShotCosts;
 
-    private MapPosition curMapPos;
-
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start ()
+    {
+        //pathFinder = GameObject.Find("AStar").GetComponent<AStarBehavior>();
         MoveToMapPosition(map.startPosition);
+        path = new List<GameTile>();
+        snapShotCosts = new FiniteList<float>(gameSystem.maxSnapshots);
 	}
 
     private void Update()
     {
-        handleInput();
+        //handleInput();
+    }
+
+    public Vector2 GetPosition()
+    {
+        return curMapPos.GetPosition();
+    }
+
+    public void TravelTowardGoal()
+    {
+        if (curMapPos == map.goalPosition)
+            return;
+        path = pathFinder.FindPath();
+        snapShotCosts.AddFirst(CalculatePathCost());
+        MoveToTile(path[0]);
+    }
+
+    public float CalculatePathCost()
+    {
+        float cost = 0;
+        foreach (GameTile n in path)
+        {
+            cost += n.F;
+        }
+        return cost;
     }
 
     // Move player to a given tile

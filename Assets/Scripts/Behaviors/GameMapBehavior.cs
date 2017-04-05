@@ -45,6 +45,11 @@ public struct MapPosition
     {
         return !m1.Equals(m2);
     }
+
+    public Vector2 GetPosition()
+    {
+        return new Vector2(x, y);
+    }
 }
 
 public struct MapSnapshot
@@ -104,6 +109,11 @@ public class GameMapBehavior : MonoBehaviour {
         if (pos.x >= width || pos.y >= height)
             return null;
         return mapData[pos.x + 1, pos.y + 1];
+    }
+    // Overload
+    public GameTile GetTileAt(Vector2 pos)
+    {
+        return mapData[(int)pos.x + 1, (int)pos.y + 1];
     }
 
     // Randomizes the holes in the map

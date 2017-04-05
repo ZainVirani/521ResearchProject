@@ -89,6 +89,7 @@ public class GameSystem : MonoBehaviour {
     public void SaveSnapShot(GameSnapshot snapshot)
     {
         snapshots.AddFirst(snapshot);
+        player.TravelTowardGoal();
         Debug.Log("Snapshot Saved!");
     }
 

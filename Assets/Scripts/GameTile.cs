@@ -7,6 +7,10 @@ public class GameTile : MonoBehaviour {
     public Material impassableMaterial;
     public Material startMaterial;
     public Material goalMaterial;
+    public float G;
+    public float H;
+    public float F;
+    public GameTile parent;
 
     [HideInInspector]
     public MapPosition mapPosition;
