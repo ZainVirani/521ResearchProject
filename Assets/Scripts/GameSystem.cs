@@ -90,6 +90,7 @@ public class GameSystem : MonoBehaviour {
     {
         snapshots.AddFirst(snapshot);
         player.TravelTowardGoal();
+        gamemap.RandomizeMap();
         Debug.Log("Snapshot Saved!");
     }
 

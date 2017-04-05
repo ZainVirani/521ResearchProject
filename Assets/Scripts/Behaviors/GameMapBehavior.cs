@@ -130,6 +130,10 @@ public class GameMapBehavior : MonoBehaviour {
             {
                 impassables.Add(gt);
             }
+            else
+            {
+                gt.MakePassable();
+            }
         }
 
         for (int i = 0; i < numHoles; i++)

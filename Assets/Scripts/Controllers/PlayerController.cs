@@ -47,6 +47,7 @@ public class PlayerController : MonoBehaviour {
         path = pathFinder.FindPath();
         snapShotCosts.AddFirst(CalculatePathCost());
         MoveToTile(path[0]);
+        gameSystem.state = GameState.Running;
     }
 
     public float CalculatePathCost()
