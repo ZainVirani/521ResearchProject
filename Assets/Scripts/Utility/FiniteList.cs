@@ -12,6 +12,16 @@ public class FiniteList<T> {
         curIndex = 0;
     }
 
+    public override string ToString()
+    {
+        string toReturn = "";
+        for (int i = 0; i < storage.Length; i++)
+        {
+            toReturn += storage[i] + ", ";
+        }
+        return toReturn;
+    }
+
     // Append an item to the front of the list
     public T AddFirst(T item)
     {
@@ -32,6 +42,8 @@ public class FiniteList<T> {
         if (position >= storage.Length)
             throw new System.IndexOutOfRangeException();
         return storage[mapToIndex(curIndex - (position + 1))]; // +1 cause cur pos points to next empty position, not most recent
+        //Debug.Log("storage length " + storage.Length);
+        //return storage[position];
     }
 
     int mapToIndex(int num)

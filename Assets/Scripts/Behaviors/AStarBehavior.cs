@@ -4,9 +4,6 @@ using UnityEngine;
 [System.Serializable]
 public class AStarBehavior : MonoBehaviour {
     
-    public int rewindsUsed;
-    public int rewindCost;
-    int maxSnapshots;
     GameTile currentTile;
     GameTile goalTile;
     List<GameTile> path;
@@ -16,26 +13,13 @@ public class AStarBehavior : MonoBehaviour {
     public PlayerController player;
 
 	void Start () {
-        rewindsUsed = 0;
         gameSystem = GameObject.Find("GameSystem").GetComponent<GameSystem>();
         mapBehavior = GameObject.Find("GameMap").GetComponent<GameMapBehavior>();
         player = GameObject.Find("Player").GetComponent<PlayerController>();
         goalTile = mapBehavior.GetTileAt(mapBehavior.goalPosition);
         currentTile = mapBehavior.GetTileAt(player.curMapPos);
-        maxSnapshots = gameSystem.maxSnapshots;
         path = new List<GameTile>();
 	}
-
-    void Rewind(int snapshotsAgo)
-    {
-        gameSystem.Rewind(snapshotsAgo);
-        rewindsUsed++;
-    }
-
-    int RewindCost()
-    {
-        return rewindCost * rewindsUsed;
-    }
 
     List<GameTile> BuildPath(GameTile start, GameTile end)
     {
@@ -154,17 +138,17 @@ public class AStarBehavior : MonoBehaviour {
         }
     }
 
-    public static float distance(Vector2 a, Vector2 b)
+    public float distance(Vector2 a, Vector2 b)
     {
         int xDif = Mathf.Abs((int)b.x - (int)a.x);
         int yDif = Mathf.Abs((int)b.y - (int)a.y);
         if (yDif > xDif)
         {
-            return (14f * xDif) + (10f * (yDif - xDif));
+            return (1.4f * xDif) + (1.0f * (yDif - xDif));
         }
         else
         {
-            return (14f * yDif) + (10f * (xDif - yDif));
+            return (1.4f * yDif) + (1.0f * (xDif - yDif));
         }
     }
 }

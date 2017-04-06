@@ -12,6 +12,18 @@ public struct PlayerSnapshot
     }
 }
 
+public static class AppHelper
+{
+public static void Quit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+         Application.Quit();
+#endif
+    }
+}
+
 public class PlayerController : MonoBehaviour {
 
     public GameMapBehavior map;
@@ -19,45 +31,181 @@ public class PlayerController : MonoBehaviour {
     public AStarBehavior pathFinder;
     public GameSystem gameSystem;
     List<GameTile> path;
-    public FiniteList<float> snapShotCosts;
+    public List<float> snapShotCosts;
+    public int rewindsUsed;
+    public float rewindCost;
+    public int comparisonWindow;
+    public float totalCost;
+    int step;
+    bool ready = false;
+    public bool rewindsAllowed;
 
-    // Use this for initialization
+    int run;
+    float accumulatedCosts;
+    float accumulatedRewinds;
+    public int totalRuns;
+
+    //init
     void Start ()
     {
-        //pathFinder = GameObject.Find("AStar").GetComponent<AStarBehavior>();
+        run = 0;
+        accumulatedCosts = 0;
+        step = 0;
+        rewindsUsed = 0;
+        totalCost = 0;
         MoveToMapPosition(map.startPosition);
         path = new List<GameTile>();
-        snapShotCosts = new FiniteList<float>(gameSystem.maxSnapshots);
+        snapShotCosts = new List<float>();
+        ready = true;
 	}
 
+    //every frame
     private void Update()
     {
         //handleInput();
     }
 
+    //get player pos
     public Vector2 GetPosition()
     {
         return curMapPos.GetPosition();
     }
 
+    //called every step
     public void TravelTowardGoal()
     {
-        if (curMapPos == map.goalPosition)
+        if (!ready)
             return;
-        path = pathFinder.FindPath();
-        snapShotCosts.AddFirst(CalculatePathCost());
+        if (curMapPos == map.goalPosition) //if goal is reached
+        {
+            Debug.Log("Final path cost: " + totalCost + ". Total rewinds used: " + rewindsUsed);
+            gameSystem.state = GameState.Paused;
+            accumulatedCosts += totalCost;
+            accumulatedRewinds += rewindsUsed;
+            if (run == totalRuns - 1)
+            {
+                Debug.Log("TOTAL AVERAGES OVER " + totalRuns + " RUNS: ");
+                Debug.Log("AVERAGE COST: " + (accumulatedCosts / totalRuns));
+                Debug.Log("AVERAGE REWINDS: " + (accumulatedRewinds / totalRuns));
+                AppHelper.Quit();
+            }
+            else
+            {
+                step = 0;
+                rewindsUsed = 0;
+                totalCost = 0;
+                MoveToMapPosition(map.startPosition);
+                path = new List<GameTile>();
+                snapShotCosts = new List<float>();
+                ready = true;
+                gameSystem.state = GameState.Running;
+            }
+            run++;
+            return;
+        }
+
+        path = pathFinder.FindPath(); //find a path and traverse the first step
         MoveToTile(path[0]);
+
+        if (snapShotCosts.Count == gameSystem.maxSnapshots)
+        {
+            snapShotCosts.RemoveAt(0);
+        }
+        snapShotCosts.Add(CalculatePathCost()); //update the list of path costs
+
+        if(step == comparisonWindow) //if it's time to consider a rewind
+        {
+            int rewindTo;
+            if (snapShotCosts.Count > 1)
+                rewindTo = ComparePreviousStates(); //consider a rewind if there is anywhere to rewind to
+            else
+                rewindTo = -1;
+
+            if (rewindTo != -1)
+            {
+                //Debug.Log(CostsToString());
+                //Debug.Log("current cost " + snapShotCosts[snapShotCosts.Count - 1]);
+                //Debug.Log("rewind by " + (snapShotCosts.Count - rewindTo - 1));
+                //Debug.Log("rewind to " + snapShotCosts[rewindTo]);
+                //Debug.Break();
+                if (rewindsAllowed)
+                    Rewind(snapShotCosts.Count - rewindTo - 1, snapShotCosts[rewindTo]);
+            }
+            step = 0;
+        }
+        else
+        {
+            step++;
+        }
         gameSystem.state = GameState.Running;
     }
 
+    //to string
+    public string CostsToString()
+    {
+        string toReturn = "";
+        for (int i = 0; i < snapShotCosts.Count; i++)
+        {
+            toReturn += snapShotCosts[i] + ", ";
+        }
+        return toReturn;
+    }
+
+    //cost of a path
     public float CalculatePathCost()
     {
         float cost = 0;
-        foreach (GameTile n in path)
+        for(int i = 0; i < path.Count - 1; i++)
         {
-            cost += n.F;
+            cost += pathFinder.distance(path[i].mapPosition.GetPosition(), path[i + 1].mapPosition.GetPosition()); //distance between each node
+            //Debug.Log(pathFinder.distance(path[i].mapPosition.GetPosition(), path[i + 1].mapPosition.GetPosition()));
         }
+        //Debug.Log(cost);
+        //Debug.Break();
         return cost;
+    }
+
+    //compares current cost to previous costs + cost of rewind
+    public int ComparePreviousStates()
+    {
+        if (snapShotCosts.Count == 0)
+            return -1;
+        float toCompare = snapShotCosts[snapShotCosts.Count-1];
+        int index = 0;
+        for (int i = 0; i < snapShotCosts.Count; i++)
+        {
+            float cost = snapShotCosts[i];
+            if (cost + RewindCost() < toCompare)
+            {
+                toCompare = cost + RewindCost();
+                index = i;
+            }
+        }
+        if (toCompare == snapShotCosts[snapShotCosts.Count - 1])
+            return -1;
+        else
+        {
+            return index;
+        }
+    }
+    
+    //tell system to rewind to specific gamestate, adjust cost accordingly
+    void Rewind(int snapshotsAgo, float cost)
+    {
+        totalCost -= (snapShotCosts[snapShotCosts.Count - 1] - cost);
+        totalCost += RewindCost();
+        path.Clear();
+        snapShotCosts.Clear();
+        snapShotCosts.Add(cost);
+        //Debug.Break();
+        gameSystem.Rewind(snapshotsAgo-1);
+        rewindsUsed++;
+    }
+
+    //calculate cost of current rewind
+    float RewindCost()
+    {
+        return rewindCost * (rewindsUsed + 1);
     }
 
     // Move player to a given tile
@@ -66,11 +214,11 @@ public class PlayerController : MonoBehaviour {
         Vector3 newPos = new Vector3(tile.transform.position.x, tile.transform.position.y);
         newPos.z = -1;
         transform.position = newPos;
-        curMapPos = tile.mapPosition;
         GameTile oldTile = map.GetTileAt(curMapPos);
-        if (oldTile)
-            oldTile.DeOccupy();
+        curMapPos = tile.mapPosition;
+        oldTile.DeOccupy();
         tile.Occupy();
+        totalCost += pathFinder.distance(oldTile.mapPosition.GetPosition(), tile.mapPosition.GetPosition());
     }
 
     // Move player to a given map position

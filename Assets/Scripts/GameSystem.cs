@@ -91,14 +91,14 @@ public class GameSystem : MonoBehaviour {
         snapshots.AddFirst(snapshot);
         player.TravelTowardGoal();
         gamemap.RandomizeMap();
-        Debug.Log("Snapshot Saved!");
+        //Debug.Log("Snapshot Saved!");
     }
 
     // Rewind to a given state
     public void Rewind(int snapshotsAgo)
     {
         if (snapshotsAgo >= maxSnapshots)
-            throw new System.ArgumentOutOfRangeException("There aren't enough snapshots stored to access that time.");
+            throw new System.ArgumentOutOfRangeException("There aren't enough snapshots stored to access that time. " + snapshotsAgo + " " + maxSnapshots);
 
         rewindTarget = snapshotsAgo;
         curRewindState = 0;
@@ -150,17 +150,18 @@ public class GameSystem : MonoBehaviour {
     void checkRewindTimer()
     {
         rewindTimer += Time.deltaTime;
-        Debug.Log("rewind: " + rewindTimer + " | period: " + rewindPeriod);
+        //Debug.Log("rewind: " + rewindTimer + " | period: " + rewindPeriod);
         if (rewindTimer >= rewindPeriod)
         {
             rewindTimer = 0;
-            curRewindState++;
+            
             LoadSnapshot(snapshots.GetAtPosition(curRewindState));
             if (curRewindState == rewindTarget)
             {
                 state = GameState.Running;
                 rewindStateUI.SetForward();
             }
+            curRewindState++;
         }
     }
 }
