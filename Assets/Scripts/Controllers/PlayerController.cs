@@ -5,10 +5,12 @@ using UnityEngine;
 public struct PlayerSnapshot
 {
     public MapPosition position;
+    public float costSoFar;
 
-    public PlayerSnapshot(MapPosition position)
+    public PlayerSnapshot(MapPosition position, float costSoFar)
     {
         this.position = position;
+        this.costSoFar = costSoFar;
     }
 }
 
@@ -35,7 +37,7 @@ public class PlayerController : MonoBehaviour {
     public int rewindsUsed;
     public float rewindCost;
     public int comparisonWindow;
-    public float totalCost;
+    public float costSoFar;
     int step;
     bool ready = false;
     public bool rewindsAllowed;
@@ -52,7 +54,7 @@ public class PlayerController : MonoBehaviour {
         accumulatedCosts = 0;
         step = 0;
         rewindsUsed = 0;
-        totalCost = 0;
+        costSoFar = 0;
         MoveToMapPosition(map.startPosition);
         path = new List<GameTile>();
         snapShotCosts = new List<float>();
@@ -78,9 +80,8 @@ public class PlayerController : MonoBehaviour {
             return;
         if (curMapPos == map.goalPosition) //if goal is reached
         {
-            Debug.Log("Final path cost: " + totalCost + ". Total rewinds used: " + rewindsUsed);
-            gameSystem.state = GameState.Paused;
-            accumulatedCosts += totalCost;
+            Debug.Log("Final path cost: " + costSoFar + ". Total rewinds used: " + rewindsUsed);
+            accumulatedCosts += costSoFar;
             accumulatedRewinds += rewindsUsed;
             if (run == totalRuns - 1)
             {
@@ -93,12 +94,11 @@ public class PlayerController : MonoBehaviour {
             {
                 step = 0;
                 rewindsUsed = 0;
-                totalCost = 0;
+                costSoFar = 0;
                 MoveToMapPosition(map.startPosition);
                 path = new List<GameTile>();
                 snapShotCosts = new List<float>();
                 ready = true;
-                gameSystem.state = GameState.Running;
             }
             run++;
             return;
@@ -137,7 +137,6 @@ public class PlayerController : MonoBehaviour {
         {
             step++;
         }
-        gameSystem.state = GameState.Running;
     }
 
     //to string
@@ -192,8 +191,7 @@ public class PlayerController : MonoBehaviour {
     //tell system to rewind to specific gamestate, adjust cost accordingly
     void Rewind(int snapshotsAgo, float cost)
     {
-        totalCost -= (snapShotCosts[snapShotCosts.Count - 1] - cost);
-        totalCost += RewindCost();
+        costSoFar += RewindCost();
         path.Clear();
         snapShotCosts.Clear();
         snapShotCosts.Add(cost);
@@ -205,7 +203,7 @@ public class PlayerController : MonoBehaviour {
     //calculate cost of current rewind
     float RewindCost()
     {
-        return rewindCost * (rewindsUsed + 1);
+        return rewindCost;// * (rewindsUsed + 1);
     }
 
     // Move player to a given tile
@@ -218,7 +216,7 @@ public class PlayerController : MonoBehaviour {
         curMapPos = tile.mapPosition;
         oldTile.DeOccupy();
         tile.Occupy();
-        totalCost += pathFinder.distance(oldTile.mapPosition.GetPosition(), tile.mapPosition.GetPosition());
+        costSoFar += pathFinder.distance(oldTile.mapPosition.GetPosition(), tile.mapPosition.GetPosition());
     }
 
     // Move player to a given map position
@@ -236,13 +234,16 @@ public class PlayerController : MonoBehaviour {
     // Takes a snapshot of the current player state
     public PlayerSnapshot TakeSnapshot()
     {
-        return new PlayerSnapshot(curMapPos);
+        return new PlayerSnapshot(curMapPos, costSoFar);
     }
 
     // Loads a snapshot of a previous state
     public void LoadSnapshot(PlayerSnapshot snapshot)
     {
+        Debug.Log("rewinding... Cost before: " + costSoFar);
         MoveToMapPosition(snapshot.position);
+        costSoFar = snapshot.costSoFar;
+        Debug.Log("Cost after: " + costSoFar);
     }
 
     void handleInput()

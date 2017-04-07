@@ -81,6 +81,7 @@ public class GameSystem : MonoBehaviour {
     // Loads a snapshot of a previous game state
     public void LoadSnapshot(GameSnapshot snapshot)
     {
+        Debug.Log("snapshot loaded");
         gamemap.LoadSnapshot(snapshot.mapState);
         player.LoadSnapshot(snapshot.playerState);
     }
