@@ -37,7 +37,7 @@ public class AStarBehavior : MonoBehaviour {
 
     public List<GameTile> FindPath()
     {
-        gameSystem.state = GameState.Paused;
+        //gameSystem.state = GameState.Paused;
         /*
         OPEN: set of nodes to be evaluated
         CLOSED: set of nodes already evaluated

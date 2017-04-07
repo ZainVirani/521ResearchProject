@@ -76,7 +76,7 @@ public class PlayerController : MonoBehaviour {
     //called every step
     public void TravelTowardGoal()
     {
-        if (!ready)
+        if (!ready || gameSystem.state != GameState.Running)
             return;
         if (curMapPos == map.goalPosition) //if goal is reached
         {
@@ -203,7 +203,7 @@ public class PlayerController : MonoBehaviour {
     //calculate cost of current rewind
     float RewindCost()
     {
-        return rewindCost;// * (rewindsUsed + 1);
+        return rewindCost * (rewindsUsed + 1);
     }
 
     // Move player to a given tile
@@ -240,10 +240,10 @@ public class PlayerController : MonoBehaviour {
     // Loads a snapshot of a previous state
     public void LoadSnapshot(PlayerSnapshot snapshot)
     {
-        Debug.Log("rewinding... Cost before: " + costSoFar);
+        //Debug.Log("rewinding... Cost before: " + costSoFar);
         MoveToMapPosition(snapshot.position);
         costSoFar = snapshot.costSoFar;
-        Debug.Log("Cost after: " + costSoFar);
+        //Debug.Log("Cost after: " + costSoFar);
     }
 
     void handleInput()
