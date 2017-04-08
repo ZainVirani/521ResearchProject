@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour {
     public GameSystem gameSystem;
     List<GameTile> path;
     public List<float> snapShotCosts;
+    public List<float> costsSoFar;
     public int rewindsUsed;
     public float rewindCost;
     public int comparisonWindow;
@@ -58,6 +59,7 @@ public class PlayerController : MonoBehaviour {
         MoveToMapPosition(map.startPosition);
         path = new List<GameTile>();
         snapShotCosts = new List<float>();
+        costsSoFar = new List<float>();
         ready = true;
 	}
 
@@ -111,7 +113,12 @@ public class PlayerController : MonoBehaviour {
         {
             snapShotCosts.RemoveAt(0);
         }
+        if (costsSoFar.Count == gameSystem.maxSnapshots)
+        {
+            costsSoFar.RemoveAt(0);
+        }
         snapShotCosts.Add(CalculatePathCost()); //update the list of path costs
+        costsSoFar.Add(costSoFar);
 
         if(step == comparisonWindow) //if it's time to consider a rewind
         {
@@ -123,12 +130,12 @@ public class PlayerController : MonoBehaviour {
 
             if (rewindTo != -1)
             {
-                //Debug.Log(CostsToString());
-                //Debug.Log("current cost " + snapShotCosts[snapShotCosts.Count - 1]);
-                //Debug.Log("rewind by " + (snapShotCosts.Count - rewindTo - 1));
-                //Debug.Log("rewind to " + snapShotCosts[rewindTo]);
-                //Debug.Break();
-                if (rewindsAllowed)
+                Debug.Log(CostsToString());
+                Debug.Log("current cost " + snapShotCosts[snapShotCosts.Count - 1]);
+                Debug.Log("rewind by " + (snapShotCosts.Count - rewindTo - 1));
+                Debug.Log("rewind to " + snapShotCosts[rewindTo]);
+                
+                if (rewindsAllowed && snapShotCosts[rewindTo] != snapShotCosts[snapShotCosts.Count - 1])
                     Rewind(snapShotCosts.Count - rewindTo - 1, snapShotCosts[rewindTo]);
             }
             step = 0;
@@ -169,17 +176,20 @@ public class PlayerController : MonoBehaviour {
     {
         if (snapShotCosts.Count == 0)
             return -1;
-        float toCompare = snapShotCosts[snapShotCosts.Count-1];
+        float toCompare = snapShotCosts[snapShotCosts.Count - 1];
+        float difference = costsSoFar[costsSoFar.Count - 1];
         int index = 0;
         for (int i = 0; i < snapShotCosts.Count; i++)
         {
-            float cost = snapShotCosts[i];
-            if (cost + RewindCost() < toCompare)
+            float cost = snapShotCosts[i] + RewindCost();
+            if (cost < toCompare + (difference - costsSoFar[i]))
             {
                 toCompare = cost + RewindCost();
+                difference = costsSoFar[i];
                 index = i;
             }
         }
+
         if (toCompare == snapShotCosts[snapShotCosts.Count - 1])
             return -1;
         else
@@ -191,10 +201,11 @@ public class PlayerController : MonoBehaviour {
     //tell system to rewind to specific gamestate, adjust cost accordingly
     void Rewind(int snapshotsAgo, float cost)
     {
-        costSoFar += RewindCost();
         path.Clear();
         snapShotCosts.Clear();
+        costsSoFar.Clear();
         snapShotCosts.Add(cost);
+        costsSoFar.Add(costSoFar);
         //Debug.Break();
         gameSystem.Rewind(snapshotsAgo-1);
         rewindsUsed++;
