@@ -100,6 +100,7 @@ public class PlayerController : MonoBehaviour {
                 MoveToMapPosition(map.startPosition);
                 path = new List<GameTile>();
                 snapShotCosts = new List<float>();
+                costsSoFar = new List<float>();
                 ready = true;
             }
             run++;
@@ -130,10 +131,10 @@ public class PlayerController : MonoBehaviour {
 
             if (rewindTo != -1)
             {
-                Debug.Log(CostsToString());
-                Debug.Log("current cost " + snapShotCosts[snapShotCosts.Count - 1]);
-                Debug.Log("rewind by " + (snapShotCosts.Count - rewindTo - 1));
-                Debug.Log("rewind to " + snapShotCosts[rewindTo]);
+                //Debug.Log(CostsToString());
+                //Debug.Log("current cost " + snapShotCosts[snapShotCosts.Count - 1]);
+                //Debug.Log("rewind by " + (snapShotCosts.Count - rewindTo - 1));
+                //Debug.Log("rewind to " + snapShotCosts[rewindTo]);
                 
                 if (rewindsAllowed && snapShotCosts[rewindTo] != snapShotCosts[snapShotCosts.Count - 1])
                     Rewind(snapShotCosts.Count - rewindTo - 1, snapShotCosts[rewindTo]);

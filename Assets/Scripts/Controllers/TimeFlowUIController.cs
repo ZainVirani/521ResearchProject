@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(Image))]
+[RequireComponent(typeof(Image))] //http://opengameart.org/content/rpg-gui-selection-arrow
 public class TimeFlowUIController : MonoBehaviour {
     public Sprite forward;
 
