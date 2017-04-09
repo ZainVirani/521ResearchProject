@@ -172,7 +172,7 @@ public class PlayerController : MonoBehaviour {
         return cost;
     }
 
-    //compares current cost to previous costs + cost of rewind
+    //compares current cost to previous costs + cost of rewind - distance between path starts
     public int ComparePreviousStates()
     {
         if (snapShotCosts.Count == 0)

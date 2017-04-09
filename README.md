@@ -8,3 +8,6 @@ The game is a simple maze with a start and end goal and discrete movement. Every
 
 ## Purpose
 To determine if given an option to rewind the game state, an agent will be more efficient in a dynamic environment.
+
+## Notes
+Increasing Snapshot Period slows down movement. Decreasing Rewind Speed slows down the rewind speed.
